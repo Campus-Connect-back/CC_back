@@ -9,23 +9,25 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "TBL_post")
+@Table(name = "post")
 public class postEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long postId;
 
-    private Long studyNumber;
+    @ManyToOne
+    @JoinColumn(name = "studentId", referencedColumnName = "studentId")
+    private usersEntity studentId;
 
-    private Long chatRoomId;
+    @OneToOne
+    @JoinColumn(name = "chatRoomId", referencedColumnName = "roomId")
+    private chatRoomEntity chatRoomId;
 
     private String postTitle;
 
     private String postContent;
 
     private String language;
-
-    private int recruitmentLimit;
 
     private String weeklyParticipation;
 
