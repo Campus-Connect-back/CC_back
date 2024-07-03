@@ -32,6 +32,6 @@ public class messageEntity {
 
     // 채팅방 id(FK)
     @ManyToOne
-    @JoinColumn(name = "roodmId", nullable = false)
+    @JoinColumn(name = "roomId", nullable = false)
     private chatRoomEntity roomId;
 }

@@ -13,7 +13,7 @@ import lombok.*;
 public class desiredLangEntity {
     @Id
     @GeneratedValue(strategy =  GenerationType.IDENTITY)
-    private Long desiredleLangId;
+    private Long desiredLangId;
 
     // 언어
     @Column(nullable = false)
