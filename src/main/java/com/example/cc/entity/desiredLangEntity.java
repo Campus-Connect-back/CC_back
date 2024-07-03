@@ -22,6 +22,6 @@ public class desiredLangEntity {
     // 학번(PK, FK)
     @Id
     @ManyToOne
-    @JoinColumn(name = "studentId", nullable = false)
-    private usersEntity studentId;
+    @JoinColumn(name = "userId", nullable = false)
+    private usersEntity userId;
 }

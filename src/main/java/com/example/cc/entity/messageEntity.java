@@ -25,10 +25,10 @@ public class messageEntity {
     @Temporal(TemporalType.TIMESTAMP)
     private Date sendTime;
 
-    // 학번(FK)
+    // 유저(FK)
     @ManyToOne
-    @JoinColumn(name = "studentId", nullable = false)
-    private userAuthenticationEntity studentId;
+    @JoinColumn(name = "userId", nullable = false)
+    private usersEntity userId;
 
     // 채팅방 id(FK)
     @ManyToOne

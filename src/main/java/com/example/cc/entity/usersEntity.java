@@ -13,11 +13,9 @@ import java.util.List;
 @Entity
 @Table(name = "users")
 public class usersEntity {
-   // 학번(PK, FK)
     @Id
-    @OneToOne
-    @JoinColumn(name = "studentId")
-    private userAuthenticationEntity studentId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long userId;
 
     //닉네임
     @Column(nullable = false)
@@ -40,10 +38,14 @@ public class usersEntity {
     private String imgUrl;
 
     //구사 언어
-    @OneToMany(mappedBy = "studentId")
+    @OneToMany(mappedBy = "userId")
     private List<availableLangEntity> availableLang;
 
     //희망 학습 언어
-    @OneToMany(mappedBy = "studentId")
+    @OneToMany(mappedBy = "userId")
     private List<desiredLangEntity> desiredLang;
+
+    @OneToOne
+    @JoinColumn(name = "studentId")
+    private userAuthenticationEntity studentId;
 }

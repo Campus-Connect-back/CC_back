@@ -16,6 +16,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 
 public class participateDTO {
-    private Long studentId;
+    private Long userId;
     private Long roomId;
 }

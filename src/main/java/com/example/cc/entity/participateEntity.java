@@ -10,11 +10,11 @@ import lombok.*;
 @Entity
 @Table(name = "participate")
 public class participateEntity {
-    // 학번(PK, FK)
+    // 유저(FK)
     @Id
     @ManyToOne
-    @JoinColumn(name = "studentId")
-    private userAuthenticationEntity studentId;
+    @JoinColumn(name = "userId", nullable = false)
+    private usersEntity userId;
 
     // 채팅방 id
     @Id

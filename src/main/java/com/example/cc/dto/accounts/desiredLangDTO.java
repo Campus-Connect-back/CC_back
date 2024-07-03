@@ -13,5 +13,5 @@ import lombok.NoArgsConstructor;
 public class desiredLangDTO {
     private Long availableLangId;
     private String lang;
-    private Long studentId;
+    private Long userId;
 }
