@@ -46,4 +46,6 @@ public class usersEntity {
     //희망 학습 언어
     @OneToMany(mappedBy = "studentId")
     private List<desiredLangEntity> desiredLang;
+
+
 }

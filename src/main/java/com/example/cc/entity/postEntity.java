@@ -3,6 +3,9 @@ package com.example.cc.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.DayOfWeek;
+import java.time.LocalDateTime;
+
 @ToString
 @Getter
 @Builder
@@ -29,12 +32,10 @@ public class postEntity {
 
     private String language;
 
-    private String weeklyParticipation;
-
     private String faceToFace;
 
-    private String DayOfWeek;
+    private Long DayOfWeek;
 
-    private String TimeInfo;
+    private LocalDateTime TimeInfo;
 
 }
