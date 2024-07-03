@@ -19,6 +19,6 @@ public class messageDTO {
     private Long messageId;
     private String messageContent;
     private Date sendTime;
-    private Long studentId;
+    private Long userId;
     private Long roomId;
 }

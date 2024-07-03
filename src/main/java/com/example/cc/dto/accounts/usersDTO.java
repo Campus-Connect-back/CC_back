@@ -18,10 +18,11 @@ import java.util.List;
 @AllArgsConstructor
 
 public class usersDTO {
-    private Long studentId;
+    private Long userId;
     private String nickName;
     private String password;
     private Date birthday;
     private String nationality;
     private String imgUrl;
+    private Long studentId;
 }

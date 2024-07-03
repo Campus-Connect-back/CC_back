@@ -13,7 +13,7 @@ import lombok.*;
 public class desiredLangEntity {
     @Id
     @GeneratedValue(strategy =  GenerationType.IDENTITY)
-    private Long desiredleLangId;
+    private Long desiredLangId;
 
     // 언어
     @Column(nullable = false)
@@ -22,6 +22,6 @@ public class desiredLangEntity {
     // 학번(PK, FK)
     @Id
     @ManyToOne
-    @JoinColumn(name = "studentId", nullable = false)
-    private usersEntity studentId;
+    @JoinColumn(name = "userId", nullable = false)
+    private usersEntity userId;
 }
