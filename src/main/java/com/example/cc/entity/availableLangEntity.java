@@ -20,7 +20,6 @@ public class availableLangEntity {
     private String lang;
 
     // 유저id
-    @Id
     @ManyToOne
     @JoinColumn(name = "userId", nullable = false)
     private usersEntity userId;
