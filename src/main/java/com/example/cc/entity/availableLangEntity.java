@@ -19,9 +19,9 @@ public class availableLangEntity {
     @Column(nullable = false)
     private String lang;
 
-    // 학번(PK, FK)
+    // 유저id
     @Id
     @ManyToOne
-    @JoinColumn(name = "studentId", nullable = false)
-    private usersEntity studentId;
+    @JoinColumn(name = "userId", nullable = false)
+    private usersEntity userId;
 }

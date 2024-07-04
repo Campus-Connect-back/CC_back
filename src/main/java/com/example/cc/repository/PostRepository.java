@@ -10,4 +10,5 @@ import java.util.List;
 public interface PostRepository extends JpaRepository<postEntity, Long> {
     List<postEntity> findByLanguage(String Language);
     postEntity findByPostId(Long postId);
+    List<postEntity> findByPostTitleContaining(String title);
 }

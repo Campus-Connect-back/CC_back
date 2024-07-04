@@ -1,5 +1,6 @@
 package com.example.cc.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.Date;
@@ -13,11 +14,9 @@ import java.util.List;
 @Entity
 @Table(name = "users")
 public class usersEntity {
-   // 학번(PK, FK)
     @Id
-    @OneToOne
-    @JoinColumn(name = "studentId")
-    private userAuthenticationEntity studentId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long userId;
 
     //닉네임
     @Column(nullable = false)
@@ -39,13 +38,23 @@ public class usersEntity {
     @Column(nullable = true)
     private String imgUrl;
 
+    @OneToOne
+    @JoinColumn(name = "studentId")
+    private userAuthenticationEntity studentId;
+
     //구사 언어
-    @OneToMany(mappedBy = "studentId")
+    @OneToMany(mappedBy = "userId")
+    @JsonIgnore
     private List<availableLangEntity> availableLang;
 
     //희망 학습 언어
-    @OneToMany(mappedBy = "studentId")
+    @OneToMany(mappedBy = "userId")
+    @JsonIgnore
     private List<desiredLangEntity> desiredLang;
 
+    //postid
+    @OneToMany(mappedBy = "userId")
+    @JsonIgnore
+    private List<postEntity> postId;
 
 }

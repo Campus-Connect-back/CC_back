@@ -33,4 +33,6 @@ public class chatRoomEntity {
     //채팅방 종류
     @Column(nullable = false, columnDefinition = "int default 0")
     private Long roomType;
+
+
 }

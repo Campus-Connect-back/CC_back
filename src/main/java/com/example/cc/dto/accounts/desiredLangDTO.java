@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 
 public class desiredLangDTO {
-    private Long availableLangId;
+    private Long desiredLangId;
     private String lang;
-    private Long studentId;
+    private Long userId;
 }
