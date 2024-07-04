@@ -19,7 +19,6 @@ public class desiredLangEntity {
     @Column(nullable = false)
     private String lang;
 
-    // 학번(PK, FK)
     @ManyToOne
     @JoinColumn(name = "userId", nullable = false)
     private usersEntity userId;
