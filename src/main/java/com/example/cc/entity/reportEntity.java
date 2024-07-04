@@ -11,17 +11,19 @@ import lombok.*;
 @Entity
 @Table(name = "report")
 public class reportEntity {
-
+//   신고id
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long repostId;
 
+//   신고자당한사람 id
     @ManyToOne
-    @JoinColumn(name = "reportedUser", referencedColumnName = "studentId")
+    @JoinColumn(name = "reportedUser", referencedColumnName = "userId")
     private usersEntity reportedUser;
 
+//   신고자 id
     @ManyToOne
-    @JoinColumn(name = "reportUser", referencedColumnName = "studentId")
+    @JoinColumn(name = "reportUser", referencedColumnName = "userId")
     private usersEntity reportUser;
 
     private String reportReason;

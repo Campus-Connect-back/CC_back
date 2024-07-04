@@ -3,38 +3,50 @@ package com.example.cc.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.DayOfWeek;
+import java.time.LocalDateTime;
+import java.util.List;
+
 @ToString
 @Getter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
+@Setter
 @Table(name = "post")
 public class postEntity {
+//   postid
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long postId;
 
+//  유저 fk
     @ManyToOne
-    @JoinColumn(name = "studentId", referencedColumnName = "studentId")
-    private usersEntity studentId;
+    @JoinColumn(name = "userId", referencedColumnName = "userId")
+    private usersEntity userId;
 
+//   채팅룸 fk
     @OneToOne
     @JoinColumn(name = "chatRoomId", referencedColumnName = "roomId")
     private chatRoomEntity chatRoomId;
 
+//   타이틀
     private String postTitle;
 
+//   내용
     private String postContent;
 
+//   모집언어
     private String language;
 
-    private String weeklyParticipation;
-
+//   대면비대면
     private String faceToFace;
 
-    private String DayOfWeek;
+//   주에만날 횟수
+    private Long DayOfWeek;
 
-    private String TimeInfo;
+//   몇시에시작할지
+    private LocalDateTime TimeInfo;
 
 }

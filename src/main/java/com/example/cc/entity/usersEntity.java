@@ -1,5 +1,6 @@
 package com.example.cc.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.Date;
@@ -37,15 +38,23 @@ public class usersEntity {
     @Column(nullable = true)
     private String imgUrl;
 
+    @OneToOne
+    @JoinColumn(name = "studentId")
+    private userAuthenticationEntity studentId;
+
     //구사 언어
     @OneToMany(mappedBy = "userId")
+    @JsonIgnore
     private List<availableLangEntity> availableLang;
 
     //희망 학습 언어
     @OneToMany(mappedBy = "userId")
+    @JsonIgnore
     private List<desiredLangEntity> desiredLang;
 
-    @OneToOne
-    @JoinColumn(name = "studentId")
-    private userAuthenticationEntity studentId;
+    //postid
+    @OneToMany(mappedBy = "userId")
+    @JsonIgnore
+    private List<postEntity> postId;
+
 }

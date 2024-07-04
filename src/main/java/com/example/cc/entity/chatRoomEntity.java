@@ -2,7 +2,6 @@ package com.example.cc.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.ColumnDefault;
 
 import java.util.Date;
 
@@ -32,6 +31,8 @@ public class chatRoomEntity {
     private Date createDate;
 
     //채팅방 종류
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "int default 0")
     private Long roomType;
+
+
 }
