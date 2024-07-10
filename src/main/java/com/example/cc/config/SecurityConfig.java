@@ -63,7 +63,7 @@ public class SecurityConfig {
     @Bean
     public AuthenticationSuccessHandler authenticationSuccessHandler(){
         return (request , response, auth)->{
-            response.sendRedirect("/user/login");
+            response.sendRedirect("http://localhost:8090/swagger-ui/index.html#/");
         };
     }
 }
