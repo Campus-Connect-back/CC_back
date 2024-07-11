@@ -24,36 +24,33 @@ import static com.mysql.cj.conf.PropertyKey.logger;
 public class UserController {
     private final UserService userService;
     private final mypageService mypageService;
-    // 재학생 인증
-    @PostMapping("/auth")
-    public String  authStudent(@RequestBody userAuthenticationDTO userAuthenticationDTO) {
-        return userService.authStudent(userAuthenticationDTO);
-
-    }
     // 회원가입
     @PostMapping("/join")
-    public ResponseEntity<?> createUserAndSaveLang(@RequestBody JoinRequestDTO joinRequestDTO) {
-        // 사용자 생성
-        userAuthenticationEntity userAuth = userService.saveAuth(joinRequestDTO.getUserAuthenticationDTO());
-
-        // 사용자 정보 저장
-        usersEntity user = userService.createUser(userAuth, joinRequestDTO.getUsersDTO());
-
-        // availableLangEntity 저장
-        availableLangEntity savedAvailableLang = userService.availableLang(user, joinRequestDTO.getAvailableLangDTO());
-
-        // desiredLangEntity 저장
-        desiredLangEntity savedDesiredLang = userService.desiredLang(user, joinRequestDTO.getDesiredLangDTO());
-
-        return ResponseEntity.ok("사용자 생성 및 언어 저장 완료");
+    public ResponseEntity<String> createUser(@RequestBody JoinRequestDTO joinRequestDTO) {
+        try{
+            String response = userService.join(joinRequestDTO);
+            return ResponseEntity.ok(response);
+        } catch (Exception e){
+            return ResponseEntity.badRequest().body("실패하였습니다");
+        }
+    }
+    // 회원 탈퇴
+    @DeleteMapping("/mypage/{user_id}/delete")
+    public ResponseEntity<String> deleteUser(@AuthenticationPrincipal PrincipalDetails principalDetails, @PathVariable Long user_id) {
+        try{
+            mypageService.deleteUser(user_id);
+            return ResponseEntity.ok().body("회원 탈퇴 성공");
+        }catch (Exception e) {
+            return ResponseEntity.badRequest().body("회원 탈퇴 실패");
+        }
     }
 
     // 마이페이지, 유저 정보 띄우기
     @GetMapping("/mypage/{user_id}")
-    public ResponseEntity<?> getMypage(@AuthenticationPrincipal PrincipalDetails principalDetails, @PathVariable Long user_id) {
-        //user_id = Long.valueOf(principalDetails.getUsername());
-        return mypageService.getUserInfo(user_id);
-    }
+    public mypageDTO getMypage(@AuthenticationPrincipal PrincipalDetails principalDetails, @PathVariable Long user_id) {
+
+            mypageDTO response = mypageService.getUserInfo(user_id);
+            return response;}
 
 
     // 프로필 사진 업로드
@@ -65,6 +62,27 @@ public class UserController {
             return ResponseEntity.ok("dto = " + userDto + " file = " + file);
         } catch(Exception e){
             return ResponseEntity.badRequest().body("이미지 파일 업로드에 실패하였습니다");
+        }
+    }
+
+    // 유저 정보 수정(비밀번호, 닉네임, 학과)
+    @PutMapping("/mypage/{user_id}/edit_userInfo")
+    public ResponseEntity<?> editInfo( @PathVariable Long user_id, @RequestBody JoinRequestDTO joinRequestDTO, @RequestParam String currentPassword){
+        try{
+            mypageService.editInfo(user_id, joinRequestDTO, currentPassword);
+            return ResponseEntity.ok("유저 정보 수정 완료");
+        } catch(Exception e){
+            return ResponseEntity.badRequest().body("유저 정보 수정에 실패하였습니다");
+        }
+    }
+    // 유저 정보 수정(비밀번호, 닉네임, 학과)
+    @PutMapping("/mypage/{user_id}/edit_userLangInfo")
+    public ResponseEntity<?> editLang( @PathVariable Long user_id, @RequestBody JoinRequestDTO joinRequestDTO, @RequestParam String currentPassword){
+        try{
+            mypageService.editLang(user_id, joinRequestDTO, currentPassword);
+            return ResponseEntity.ok("유저 언어 정보 수정 완료");
+        } catch(Exception e){
+            return ResponseEntity.badRequest().body("유저 언어 정보 수정에 실패하였습니다");
         }
     }
 }
