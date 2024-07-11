@@ -5,7 +5,6 @@ import com.example.cc.entity.usersEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
-
 public interface AvailableLangRepository extends JpaRepository<availableLangEntity, Long> {
-    List<availableLangEntity> findByUserId(usersEntity userId);
+    List<availableLangEntity> findByUserId(usersEntity userEntity);
 }
