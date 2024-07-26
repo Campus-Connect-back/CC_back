@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -12,6 +14,6 @@ import lombok.NoArgsConstructor;
 public class JoinRequestDTO {
     private userAuthenticationDTO userAuthenticationDTO;
     private usersDTO usersDTO;
-    private availableLangDTO availableLangDTO;
-    private desiredLangDTO desiredLangDTO;
+    private List<availableLangDTO> availableLangDTO;
+    private List<desiredLangDTO> desiredLangDTO;
 }
