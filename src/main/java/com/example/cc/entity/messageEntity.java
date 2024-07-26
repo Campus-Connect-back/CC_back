@@ -7,6 +7,7 @@ import java.util.Date;
 
 @ToString
 @Getter
+@Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor

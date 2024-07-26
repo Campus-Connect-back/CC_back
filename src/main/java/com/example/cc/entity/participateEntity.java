@@ -8,6 +8,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
+@IdClass(participateId.class)
 @Table(name = "participate")
 public class participateEntity {
     // 유저(FK)

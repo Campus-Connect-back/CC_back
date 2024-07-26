@@ -29,7 +29,7 @@ public class PrincipalDetails implements UserDetails {
     // get Username 메서드, Long타입 학번을 string을 변환
     @Override
     public String getUsername() {
-        return String.valueOf(user.getStudentId());
+        return String.valueOf(user.getStudentId().getStudentId());
     }
 
     // 계정이 만료 되었는지 (true: 만료X)

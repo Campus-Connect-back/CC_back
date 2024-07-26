@@ -41,7 +41,9 @@ dependencies {
     implementation 'org.bgee.log4jdbc-log4j2:log4jdbc-log4j2-jdbc4.1:1.16'
     implementation 'org.springframework.security:spring-security-core'
     implementation 'org.springframework.boot:spring-boot-starter-security'
-
+    implementation 'org.springframework.boot:spring-boot-starter-websocket' //STOMP 관련 라이브러리 설치
+    implementation 'org.webjars:sockjs-client:1.1.2' // websocket 실시간 통신
+    implementation 'org.webjars:stomp-websocket:2.3.3-1' //stomp 구독
 
 }
 
