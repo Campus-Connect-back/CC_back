@@ -10,4 +10,5 @@ public interface UserRepository extends JpaRepository<usersEntity, Long> {
     usersEntity findByUserId(Long userId);
     // 학번 찾기
     Optional<usersEntity> findByStudentId_StudentId(Long studentId);
+
 }
