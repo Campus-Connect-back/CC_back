@@ -12,6 +12,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 @EnableWebSecurity //웹 보안 활성화 spring security 이용해서
@@ -33,7 +35,10 @@ public class SecurityConfig {
                         .requestMatchers(
                                 new AntPathRequestMatcher("/user/login"),
                                 new AntPathRequestMatcher("/user/auth"),
-                                new AntPathRequestMatcher("/user/join")
+                                new AntPathRequestMatcher("/user/join"),
+                                new AntPathRequestMatcher("/chat/room/{roomId}"), // 임의로 해놓은 것
+                                new AntPathRequestMatcher("/stomp/chat/**"), // WebSocket 엔드포인트 허용
+                                new AntPathRequestMatcher("/stomp/match/**")  // WebSocket 엔드포인트 허용
                         ).permitAll() // 해당 요청에 대해 접근 허용
                         .anyRequest().authenticated() //나머지 요청들은 인증 필요함
                 )
@@ -64,6 +69,18 @@ public class SecurityConfig {
     public AuthenticationSuccessHandler authenticationSuccessHandler(){
         return (request , response, auth)->{
             response.sendRedirect("http://localhost:8090/swagger-ui/index.html#/");
+        };
+    }
+    @Bean
+    public WebMvcConfigurer corsConfigurer() {
+        return new WebMvcConfigurer() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/**")
+                        .allowedOrigins("http://localhost:8090") // 클라이언트의 URL을 지정합니다
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                        .allowedHeaders("*");
+            }
         };
     }
 }
