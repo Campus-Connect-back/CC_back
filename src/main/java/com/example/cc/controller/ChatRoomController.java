@@ -52,4 +52,9 @@ public class ChatRoomController {
     public void exitRoom(@AuthenticationPrincipal PrincipalDetails principal, @PathVariable Long roomId) {
         chatRoomService.exitRoom(principal, roomId);
     }
+    // 채팅방 참여자 목록
+    @GetMapping("/room/{roomId}/member")
+    public List<usersEntity> getMembers(@AuthenticationPrincipal PrincipalDetails principal, @PathVariable Long roomId) {
+        return chatRoomService.getMembers(principal, roomId);
+    }
 }
