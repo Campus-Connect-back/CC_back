@@ -8,7 +8,7 @@ import java.util.Optional;
 
 public interface UserAuthRepository extends JpaRepository<userAuthenticationEntity, Long> {
     // 가입해서 학생 정보 있는지 확인
-    boolean existsByStudentIdAndStudentNameAndMajor(Long studentId, String studentName, String major);
+    boolean existsByStudentIdAndStudentNameAndMajor(String studentId, String studentName, String major);
 
-    userAuthenticationEntity findByStudentId(Long studentId);
+    Optional<userAuthenticationEntity> findByStudentId(String studentId);
 }

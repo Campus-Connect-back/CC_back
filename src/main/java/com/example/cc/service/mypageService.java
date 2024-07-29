@@ -18,6 +18,7 @@ import org.apache.coyote.Response;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -41,9 +42,9 @@ public class mypageService {
     private final UsersRepository usersRepository;
 
     // 유저 정보 띄우기(닉네임, 생년월일, 학과, 학번, 국적, 구사 가능 언어, 희망 학습 언어)
-    public mypageDTO getUserInfo(Long userId) {
-        // 로그인한 사용자의 userId로 usersEntity에서 해당 객체 찾기
-        usersEntity user = userRepository.findByStudentId_StudentId(userId)
+    public mypageDTO getUserInfo(@AuthenticationPrincipal PrincipalDetails principalDetails) {
+        // 로그인한 사용자의 studentId로 usersEntity에서 해당 객체 찾기
+        usersEntity user = userRepository.findByStudentId_StudentId(principalDetails.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다"));
 
         // 찾은 user 객체로 availableLang, desiredLang 찾기
@@ -139,10 +140,12 @@ public class mypageService {
         }
     }
 
-    public ResponseEntity<?> uploadImg(Long userId, MultipartFile file) {
-        Optional<usersEntity> user = userRepository.findByStudentId_StudentId(userId);
+    public ResponseEntity<?> uploadImg(@AuthenticationPrincipal PrincipalDetails principalDetails,usersDTO userDto, MultipartFile file) {
+        // 로그인한 사용자의 studentId로 usersEntity에서 해당 객체 찾기
+        Optional<usersEntity> user = userRepository.findByStudentId_StudentId(principalDetails.getUsername());
         if (user.isPresent()) {
             usersEntity userEntity = user.get();
+            Long userId = userEntity.getUserId();
             try {
                 String imgUrl = saveFile(file, userId);
                 if (imgUrl != null) {
@@ -163,11 +166,12 @@ public class mypageService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("사용자를 찾을 수 없습니다");
         }
     }
-    // 내 정보 수정하기(비밀번호, 닉네임, 학과 수정)
+
+    // 내 정보 수정하기(비밀번호, 닉네임, 학과, 생년월일 수정)
     @Transactional
-    public void editInfo(Long userId, JoinRequestDTO joinRequestDTO, String currentPassword) {
-        // 로그인한 사용자의 userId로 usersEntity에서 해당 객체 찾기
-        usersEntity user = userRepository.findByStudentId_StudentId(userId)
+    public void editInfo(@AuthenticationPrincipal PrincipalDetails principalDetails, JoinRequestDTO joinRequestDTO, String currentPassword) {
+        // 로그인한 사용자의 studentId로 usersEntity에서 해당 객체 찾기
+        usersEntity user = userRepository.findByStudentId_StudentId(principalDetails.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다"));
 
         userAuthenticationEntity userAuth = user.getStudentId();
@@ -180,6 +184,10 @@ public class mypageService {
         // 학과 수정
         if (joinRequestDTO.getUserAuthenticationDTO().getMajor() != null  && !joinRequestDTO.getUserAuthenticationDTO().getMajor().isEmpty()) {
             userAuth.setMajor(joinRequestDTO.getUserAuthenticationDTO().getMajor());
+        }
+        // 생년월일 수정
+        if (joinRequestDTO.getUsersDTO().getBirthday() != null ) {
+            user.setBirthday(joinRequestDTO.getUsersDTO().getBirthday());
         }
 
         // 입력한 비밀번호와 현재 비밀번호가 같은지 확인하고 덮어쓰기
@@ -196,9 +204,9 @@ public class mypageService {
 
     // 국적, 구사 가능 언어, 희망 학습 언어 수정
     @Transactional
-    public void editLang(Long userId, JoinRequestDTO joinRequestDTO, String currentPassword) {
-        // 로그인한 사용자의 userId로 usersEntity에서 해당 객체 찾기
-        usersEntity user = userRepository.findByStudentId_StudentId(userId)
+    public void editLang(@AuthenticationPrincipal PrincipalDetails principalDetails, JoinRequestDTO joinRequestDTO) {
+        // 로그인한 사용자의 studentId로 usersEntity에서 해당 객체 찾기
+        usersEntity user = userRepository.findByStudentId_StudentId(principalDetails.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다"));
         List<availableLangEntity> availableLangs = availableLangRepository.findByUserId(user);
         List<desiredLangEntity> desiredLangs = desiredLangRepository.findByUserId(user);
@@ -252,10 +260,11 @@ public class mypageService {
     }
 
     //회원 탈퇴
-    public void deleteUser(Long userId) {
-        // 로그인한 사용자의 userId(학번)로 usersEntity에서 해당 객체 찾기
-        usersEntity user = userRepository.findByStudentId_StudentId(userId)
+    public void deleteUser(@AuthenticationPrincipal PrincipalDetails principalDetails) {
+        // 로그인한 사용자의 studentId로 usersEntity에서 해당 객체 찾기
+        usersEntity user = userRepository.findByStudentId_StudentId(principalDetails.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다"));
+
         userAuthenticationEntity userAuth = user.getStudentId();
         List<availableLangEntity> availableLangs = availableLangRepository.findByUserId(user);
         List<desiredLangEntity> desiredLangs = desiredLangRepository.findByUserId(user);
