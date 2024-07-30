@@ -8,6 +8,7 @@ import com.example.cc.service.mypageService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.Response;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -24,6 +25,23 @@ import static com.mysql.cj.conf.PropertyKey.logger;
 public class UserController {
     private final UserService userService;
     private final mypageService mypageService;
+
+
+    // 파일 저장 경로, application.properties에서 설정
+    @Value("${file.upload-dir}")
+    private String uploadDir;
+    // 프로필 사진 업로드
+    @PostMapping(value= "/mypage/edit_profileImg", produces = "application/json", consumes = "multipart/form-data")
+    public ResponseEntity<?> uploadImg(@AuthenticationPrincipal PrincipalDetails principalDetails,
+                                       @RequestParam("file") MultipartFile file){
+        try{
+            mypageService.uploadImg(principalDetails, file);
+            return ResponseEntity.ok(" file = " + file);
+        } catch(Exception e){
+            return ResponseEntity.badRequest().body("이미지 파일 업로드에 실패하였습니다");
+        }
+    }
+
     // 재학생 인증
     @PostMapping("/auth")
     public String  authStudent(@RequestBody studentDatabaseDTO studentDatabaseDTO) {
@@ -57,19 +75,6 @@ public class UserController {
     public mypageDTO getMypage(@AuthenticationPrincipal PrincipalDetails principalDetails) {
             mypageDTO response = mypageService.getUserInfo(principalDetails);
             return response;
-    }
-
-    // 프로필 사진 업로드
-    @PostMapping("/mypage/edit_profileImg")
-    public ResponseEntity<?> uploadImg(@AuthenticationPrincipal PrincipalDetails principalDetails,
-                                       @RequestPart(value="key", required=false) usersDTO userDto,
-                                       @RequestPart(value="file", required=false) MultipartFile file){
-        try{
-            mypageService.uploadImg(principalDetails, userDto, file);
-            return ResponseEntity.ok("dto = " + userDto + " file = " + file);
-        } catch(Exception e){
-            return ResponseEntity.badRequest().body("이미지 파일 업로드에 실패하였습니다");
-        }
     }
 
     // 유저 정보 수정(비밀번호, 닉네임, 학과)
