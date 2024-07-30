@@ -44,7 +44,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-websocket' //STOMP 관련 라이브러리 설치
     implementation 'org.webjars:sockjs-client:1.1.2' // websocket 실시간 통신
     implementation 'org.webjars:stomp-websocket:2.3.3-1' //stomp 구독
-
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis' // Redis 사용
+    implementation group: 'com.google.guava', name: 'guava', version: '31.1-jre' // 파일 확장자
 }
 
 tasks.named('test') {
