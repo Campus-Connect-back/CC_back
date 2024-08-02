@@ -52,7 +52,6 @@ public class ChatRoomService {
         }
         return matchRooms;
     }
-
     // 그룹 채팅 목록 반환
     public List<chatRoomEntity> getGroupRooms(@AuthenticationPrincipal PrincipalDetails principalDetails){
         usersEntity user = userRepository.findByStudentId_StudentId(principalDetails.getUsername())
