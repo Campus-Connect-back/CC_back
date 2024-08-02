@@ -1,0 +1,144 @@
+package com.example.cc.service;
+
+import com.example.cc.entity.*;
+import com.example.cc.repository.ChatRoomRepository;
+import com.example.cc.repository.ParticipateRepository;
+import com.example.cc.repository.UsersRepository;
+import jakarta.annotation.PostConstruct;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.SetOperations;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StopWatch;
+
+import java.util.Date;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class MatchService {
+    private final RedisTemplate<String,String> redisTemplate;
+    private final UsersRepository usersRepository;
+    private final ChatRoomRepository chatRoomRepository;
+    private final ParticipateRepository participateRepository;
+    private  SetOperations<String, String> setOps;
+
+    @PostConstruct
+    private void init() {
+        setOps = redisTemplate.opsForSet();
+    }
+
+    @Transactional
+    // 매칭 버튼 누르면
+    public void startMatch(usersEntity user){
+        //  로그인한 사용자의 userId 반환하기
+        String userId = user.getUserId().toString();
+        // 사용자의 구사 가능 언어 set으로 저장하기
+        for (availableLangEntity lang : user.getAvailableLang()){
+            setOps.add("availableLang:" + lang.getLang(), userId);
+        }
+        // 사용자의 희망 학습 언어 set으로 저장하기
+        for (desiredLangEntity lang : user.getDesiredLang()){
+            setOps.add("desiredLang:" + lang.getLang(), userId);
+        }
+        // 유저 매칭하기
+        matchUser(user);
+    }
+
+    // 유저 매칭하기
+    private void matchUser(usersEntity user){
+
+            //  로그인한 사용자의 userId 반환하기
+            String userId = String.valueOf(user.getUserId());
+            // redis 대기열 돌면서 매칭되는 사람이 있는지 검사
+            for (desiredLangEntity desiredLang : user.getDesiredLang()) {
+                Set<String> matchedUserIds = setOps.members("availableLang:" + desiredLang.getLang());
+                matchedUserIds.remove(userId);  // 자기 자신을 제거
+
+                for (String matchedUserId : matchedUserIds) {
+                    Long matchUserId = Long.valueOf(matchedUserId);
+                    usersEntity matchedUser = getUserFromRedis(matchUserId);
+                    System.out.println("Matching candidates for language " + desiredLang.getLang() + ": " + matchedUserIds);
+                    // 매칭되는 사람이 있으면
+                    if (isMatch(matchedUser, user)) {
+                        // 매칭 성사
+                        System.out.println("Matching successful between: " + user.getNickName() + " and " + matchedUser.getNickName());
+                        // 채팅방 만들기
+                        createChatRoom(matchedUser, user);
+                        // 대기열에서 매칭된 사용자 정보 지우기
+                        removeUserFromQueue(matchedUser);
+                        removeUserFromQueue(user);
+                        return;
+                    }
+                }
+            }
+
+
+    }
+
+    // 매칭 조건 검사하기
+    private boolean isMatch(usersEntity user1, usersEntity user2){
+        // 내가 선택한 희망 구사언어-상대방의 구사 가능 언어 하나라도 일치하면 매칭됨
+        Set<String> user1DesiredLangs = user1.getDesiredLang().stream()
+                .map(desiredLangEntity::getLang)
+                .collect(Collectors.toSet());
+
+        Set<String> user2AvailableLangs = user2.getAvailableLang().stream()
+                .map(availableLangEntity::getLang)
+                .collect(Collectors.toSet());
+
+        Set<String> user2DesiredLangs = user2.getDesiredLang().stream()
+                .map(desiredLangEntity::getLang)
+                .collect(Collectors.toSet());
+
+        Set<String> user1AvailableLangs = user1.getAvailableLang().stream()
+                .map(availableLangEntity::getLang)
+                .collect(Collectors.toSet());
+
+        return user1AvailableLangs.stream().anyMatch(user2DesiredLangs::contains) &&
+                user2AvailableLangs.stream().anyMatch(user1DesiredLangs::contains);
+    }
+
+    // 유저 정보 가져오기
+    private usersEntity getUserFromRedis(Long userId){
+        return usersRepository.findById(userId).orElse(null);
+    }
+
+    // 채팅방 생성
+    private void createChatRoom(usersEntity user1, usersEntity user2){
+        //채팅방 만들기
+        chatRoomEntity chatRoom =  chatRoomRepository.save(chatRoomEntity.builder()
+                .createDate(new Date())
+                .roomName(user1.getNickName()+user2.getNickName())
+                .peopleNum(2L)
+                .roomType(0L)
+                .build());
+        chatRoomEntity room = chatRoom;
+        // participateEntity에 추가하기
+        participateEntity participate1 =  participateRepository.save(participateEntity.builder()
+                .roomId(room)
+                .userId(user1)
+                .build());
+
+        participateEntity participate2 =  participateRepository.save(participateEntity.builder()
+                .roomId(room)
+                .userId(user2)
+                .build());
+    }
+
+    // 매칭 성사되면 대기큐에서 삭제하기
+    private void removeUserFromQueue(usersEntity user) {
+        String userId = user.getUserId().toString();
+
+        for (availableLangEntity lang : user.getAvailableLang()) {
+            setOps.remove("availableLang:" + lang.getLang(), userId);
+        }
+
+        for (desiredLangEntity lang : user.getDesiredLang()) {
+            setOps.remove("desiredLang:" + lang.getLang(), userId);
+        }
+    }
+
+}
