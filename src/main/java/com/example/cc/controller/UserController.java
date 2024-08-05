@@ -5,10 +5,13 @@ import com.example.cc.dto.accounts.*;
 import com.example.cc.entity.*;
 import com.example.cc.service.UserService;
 import com.example.cc.service.mypageService;
+import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -16,6 +19,9 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
+import java.net.MalformedURLException;
 
 import static com.mysql.cj.conf.PropertyKey.logger;
 
@@ -32,15 +38,18 @@ public class UserController {
     private String uploadDir;
     // 프로필 사진 업로드
     @PostMapping(value= "/mypage/edit_profileImg", produces = "application/json", consumes = "multipart/form-data")
-    public ResponseEntity<?> uploadImg(@AuthenticationPrincipal PrincipalDetails principalDetails,
-                                       @RequestParam("file") MultipartFile file){
-        try{
-            mypageService.uploadImg(principalDetails, file);
-            return ResponseEntity.ok(" file = " + file);
-        } catch(Exception e){
-            return ResponseEntity.badRequest().body("이미지 파일 업로드에 실패하였습니다");
-        }
+    public usersEntity uploadImg(@AuthenticationPrincipal PrincipalDetails principalDetails,
+                                       @RequestParam("file") MultipartFile file) {
+        return mypageService.uploadImg(principalDetails, file);
+
     }
+    @GetMapping("/images/{imgUrl}")
+    public UrlResource getImage(@PathVariable String imgUrl) throws MalformedURLException {
+        File file = new File(uploadDir + "/"+ imgUrl);
+        return new UrlResource(file.toURI());
+    }
+
+
 
     // 재학생 인증
     @PostMapping("/auth")
@@ -79,22 +88,15 @@ public class UserController {
 
     // 유저 정보 수정(비밀번호, 닉네임, 학과)
     @PutMapping("/mypage/edit_userInfo")
-    public ResponseEntity<?> editInfo(@AuthenticationPrincipal PrincipalDetails principalDetails, @RequestBody JoinRequestDTO joinRequestDTO, @RequestParam String currentPassword){
-        try{
-            mypageService.editInfo(principalDetails, joinRequestDTO, currentPassword);
-            return ResponseEntity.ok("유저 정보 수정 완료");
-        } catch(Exception e){
-            return ResponseEntity.badRequest().body("유저 정보 수정에 실패하였습니다");
-        }
+    public JoinRequestDTO editInfo(@AuthenticationPrincipal PrincipalDetails principalDetails, @RequestBody JoinRequestDTO joinRequestDTO, @RequestParam String password){
+
+            return mypageService.editInfo(principalDetails, joinRequestDTO, password);
+
     }
     // 유저 정보 수정(비밀번호, 닉네임, 학과)
     @PutMapping("/mypage/edit_userLangInfo")
-    public ResponseEntity<?> editLang(@AuthenticationPrincipal PrincipalDetails principalDetails, @RequestBody JoinRequestDTO joinRequestDTO){
-        try{
-            mypageService.editLang(principalDetails, joinRequestDTO);
-            return ResponseEntity.ok("유저 언어 정보 수정 완료");
-        } catch(Exception e){
-            return ResponseEntity.badRequest().body("유저 언어 정보 수정에 실패하였습니다");
-        }
+    public JoinRequestDTO editLang(@AuthenticationPrincipal PrincipalDetails principalDetails, @RequestBody JoinRequestDTO joinRequestDTO) {
+
+        return mypageService.editLang(principalDetails, joinRequestDTO);
     }
 }

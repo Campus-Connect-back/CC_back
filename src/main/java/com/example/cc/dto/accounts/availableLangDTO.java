@@ -16,4 +16,8 @@ public class availableLangDTO {
     private Long availableLangId;
     private String lang;
     private Long userId;
+    // 생성자 추가
+    public availableLangDTO(String lang) {
+        this.lang = lang;
+    }
 }
