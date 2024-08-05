@@ -1,5 +1,7 @@
 package com.example.cc.config;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,8 +14,14 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import java.util.Arrays;
+import java.util.Collections;
 
 @Configuration
 @EnableWebSecurity //웹 보안 활성화 spring security 이용해서
@@ -23,20 +31,17 @@ public class SecurityConfig {
     @Bean
     // securityFilterChain 스프링 시큐리티 설정 파일, 인증 인가 등 엮여있음
     public SecurityFilterChain securityFilterChain(HttpSecurity http)throws Exception {
-     /* 전체 요청에 접근할 수 있도록 하는 코드(별도의 인증 없이 모든 서비스 이용할 수 있게)
-        return http
-                .csrf(csrf ->csrf.disable())
-                .authorizeHttpRequests(auth->auth.anyRequest().permitAll()).build();
-     */
         // 요청에 대한 인증,인가 설정 요청 했을때 막아주는게 필요하다 ? (로그인 안되어있다 ->로그인페이지로)
         return http
                 .csrf(csrf ->csrf.disable())
+                .cors(corsCustomizer -> corsCustomizer.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth->auth
                         .requestMatchers(
                                 new AntPathRequestMatcher("/user/login"),
                                 new AntPathRequestMatcher("/user/auth"),
                                 new AntPathRequestMatcher("/user/join"),
-                                new AntPathRequestMatcher("/chat/room/{roomId}"), // 임의로 해놓은 것
+                                new AntPathRequestMatcher("/chat/roomList/match"), // 임의로 해놓은 것
+                                new AntPathRequestMatcher("/chat/roomList/group"),
                                 new AntPathRequestMatcher("/stomp/chat/**"), // WebSocket 엔드포인트 허용
                                 new AntPathRequestMatcher("/stomp/match/**")  // WebSocket 엔드포인트 허용
                         ).permitAll() // 해당 요청에 대해 접근 허용
@@ -68,19 +73,20 @@ public class SecurityConfig {
     @Bean
     public AuthenticationSuccessHandler authenticationSuccessHandler(){
         return (request , response, auth)->{
-            response.sendRedirect("http://localhost:8090/swagger-ui/index.html#/");
+            response.setStatus(HttpServletResponse.SC_OK); // HTTP 200 응답 코드
         };
     }
     @Bean
-    public WebMvcConfigurer corsConfigurer() {
-        return new WebMvcConfigurer() {
-            @Override
-            public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:8090") // 클라이언트의 URL을 지정합니다
-                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                        .allowedHeaders("*");
-            }
-        };
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(Arrays.asList("http://10.50.104.89:3000"));// 프론트 디바이스 ip주소
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowCredentials(true);
+        config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        config.setMaxAge(3600L); //1시간
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 }

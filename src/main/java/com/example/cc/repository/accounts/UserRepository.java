@@ -6,9 +6,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<usersEntity, Long> {
-    // user 존재하는지
+    // userId로 사용자 찾기
     usersEntity findByUserId(Long userId);
-    // 학번 찾기
-    Optional<usersEntity> findByStudentId_StudentId(Long studentId);
+    // 학번으로 사용자 찾기
+    Optional<usersEntity> findByStudentId_StudentId(String studentId);
 
 }

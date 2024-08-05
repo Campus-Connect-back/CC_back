@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 
 public class studentDatabaseDTO {
-    private Long studentId;
+    private String studentId;
     private String studentName;
     private String major;
 }

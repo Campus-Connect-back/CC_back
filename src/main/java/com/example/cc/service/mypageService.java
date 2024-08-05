@@ -15,9 +15,11 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.coyote.Response;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -27,9 +29,16 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.UUID;
+
+import static org.aspectj.weaver.tools.cache.SimpleCacheFactory.path;
+
 @Service
 @RequiredArgsConstructor
 public class mypageService {
@@ -39,11 +48,16 @@ public class mypageService {
     private final DesiredLangRepository desiredLangRepository;
     private final UserAuthRepository userAuthRepository;
     private final UsersRepository usersRepository;
+    // 이미지 저장 경로
+    @Value("${file.upload-dir}")
+    private String uploadDir;
+    // 이미지 파일은 최대 5MB
+    private static final long MAX_IMAGE_SIZE = 5242880;
 
     // 유저 정보 띄우기(닉네임, 생년월일, 학과, 학번, 국적, 구사 가능 언어, 희망 학습 언어)
-    public mypageDTO getUserInfo(Long userId) {
-        // 로그인한 사용자의 userId로 usersEntity에서 해당 객체 찾기
-        usersEntity user = userRepository.findByStudentId_StudentId(userId)
+    public mypageDTO getUserInfo(@AuthenticationPrincipal PrincipalDetails principalDetails) {
+        // 로그인한 사용자의 studentId로 usersEntity에서 해당 객체 찾기
+        usersEntity user = userRepository.findByStudentId_StudentId(principalDetails.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다"));
 
         // 찾은 user 객체로 availableLang, desiredLang 찾기
@@ -73,23 +87,11 @@ public class mypageService {
                 .build();
         return mypage;
     }
-
-    @Transactional
-    public String saveFile(MultipartFile file, Long userId) throws IOException {
-        String absolutePath = new File("").getAbsolutePath() + File.separator;
-        // 이미지 저장 경로
-        String path = "src" + File.separator + "main" + File.separator + "resources" + File.separator + "static"
-                + File.separator + "images" + File.separator + "userImg";
-
-        File imgUrl = new File(path);
-        // 폴더없으면 생성
-        if (!imgUrl.exists()) {
-            imgUrl.mkdirs();
-        }
-        // 파일이 비어있지 않으면
+    // 이미지 저장
+    private String saveFile(MultipartFile file) throws IOException {
+        String extension;
         if (!file.isEmpty()) {
             String contentType = file.getContentType();
-            String originalFileExtension;
 
             // 타입에 따른 확장자 결정
             if (ObjectUtils.isEmpty(contentType)) {
@@ -97,77 +99,69 @@ public class mypageService {
                 return null;
             } else {
                 if (contentType.contains("image/jpeg")) {
-                    originalFileExtension = ".jpg";
+                    extension = ".jpg";
                 } else if (contentType.contains("image/png")) {
-                    originalFileExtension = ".png";
+                    extension = ".png";
                 } else {
                     throw new IOException("지원하지 않는 이미지 파일 형식입니다.");
                 }
             }
-
             // 파일저장 이름
-            String originalFileName = file.getOriginalFilename();
-            // 확장자를 제외한 파일 이름과 확장자 추출
-            int lastIndex = originalFileName.lastIndexOf('.');
-            String fileName = originalFileName.substring(0, lastIndex);
-
-            String userImgName = fileName + System.nanoTime() + originalFileExtension;
-
-            // 파일 저장
-            File savedFile = new File(absolutePath + path + File.separator + userImgName);
-            System.out.println("파일 저장경로:" + savedFile.getAbsolutePath());
-            file.transferTo(savedFile);
-
-            return path + File.separator + userImgName;
+            String fileName = UUID.randomUUID().toString() + extension;
+            byte[] fileContent = file.getBytes();
+            String filePath = uploadDir + "/" + fileName;
+            Path path = Paths.get(filePath);
+            Files.write(path, fileContent);
+            return fileName;
         }
-
         return null;
     }
+    // 이미지 삭제하기
+    private void deleteExistingImage(String imgUrl) {
+        try {
+            // 이미지 파일 경로 생성
+            Path path = Paths.get(uploadDir + "/" + imgUrl);
+            // 파일 삭제
+            Files.deleteIfExists(path);
+        } catch (IOException e) {
+            // 파일 삭제 중 예외 처리
+            System.err.println("기존 이미지 삭제 중 오류 발생: " + e.getMessage());
+        }
+    }
+    // 이미지 업로드
+    public ResponseEntity<?> uploadImg(@AuthenticationPrincipal PrincipalDetails principalDetails, MultipartFile file) {
+        // 로그인한 사용자의 studentId로 usersEntity에서 해당 객체 찾기
+        usersEntity user = userRepository.findByStudentId_StudentId(principalDetails.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다"));
 
-    // 기존에 존재하던 이미지 경로 삭제
-    public void deleteUserImg(Long userId) {
-        Optional<usersEntity> userEntity = userRepository.findById(userId);
-        if (userEntity.isPresent()) {
-            usersEntity user = userEntity.get();
-            String imgUrl = user.getImgUrl();
+        if(file.getSize() > MAX_IMAGE_SIZE) {
+            throw new RuntimeException("이미지 크기가 너무 큽니다");
+        }
+        // 이미지 저장하기
+        try {
+            String imgUrl = saveFile(file);
+            // 기존 이미지 URL 확인
+            String existingImgUrl = user.getImgUrl();
+            if (existingImgUrl != null) {
+                deleteExistingImage(existingImgUrl);
+            }
             if (imgUrl != null) {
-                File file = new File(imgUrl);
-                if (file.exists()) {
-                    file.delete();
-                }
+                user.setImgUrl(imgUrl);
+                userRepository.save(user);
+                return ResponseEntity.ok().body("이미지가 저장되었습니다");
+            } else {
+                return ResponseEntity.badRequest().body("1.이미지 파일 업로드 중에 오류가 발생하였습니다");
             }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("2,이미지 파일 업로드 중에 오류가 발생하였습니다");
         }
     }
 
-    public ResponseEntity<?> uploadImg(Long userId, MultipartFile file) {
-        Optional<usersEntity> user = userRepository.findByStudentId_StudentId(userId);
-        if (user.isPresent()) {
-            usersEntity userEntity = user.get();
-            try {
-                String imgUrl = saveFile(file, userId);
-                if (imgUrl != null) {
-                    // 기존에 설정한 이미지 있으면 지우고 새로 imgUrl 저장
-                    if (userEntity.getImgUrl() != null) {
-                        deleteUserImg(userId);
-                    }
-                    userEntity.setImgUrl(imgUrl);
-                    userRepository.save(userEntity);
-                    return ResponseEntity.ok().body("이미지가 저장되었습니다");
-                } else {
-                    return ResponseEntity.badRequest().body("1.이미지 파일 업로드 중에 오류가 발생하였습니다");
-                }
-            } catch (Exception e) {
-                return ResponseEntity.badRequest().body("2,이미지 파일 업로드 중에 오류가 발생하였습니다");
-            }
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("사용자를 찾을 수 없습니다");
-        }
-    }
-    // 내 정보 수정하기(비밀번호, 닉네임, 학과 수정)
+    // 내 정보 수정하기(비밀번호, 닉네임, 학과, 생년월일 수정)
     @Transactional
-    public void editInfo(Long userId, JoinRequestDTO joinRequestDTO, String currentPassword) {
-        // 로그인한 사용자의 userId로 usersEntity에서 해당 객체 찾기
-        usersEntity user = userRepository.findByStudentId_StudentId(userId)
+    public void editInfo(@AuthenticationPrincipal PrincipalDetails principalDetails, JoinRequestDTO joinRequestDTO, String currentPassword) {
+        // 로그인한 사용자의 studentId로 usersEntity에서 해당 객체 찾기
+        usersEntity user = userRepository.findByStudentId_StudentId(principalDetails.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다"));
 
         userAuthenticationEntity userAuth = user.getStudentId();
@@ -180,6 +174,10 @@ public class mypageService {
         // 학과 수정
         if (joinRequestDTO.getUserAuthenticationDTO().getMajor() != null  && !joinRequestDTO.getUserAuthenticationDTO().getMajor().isEmpty()) {
             userAuth.setMajor(joinRequestDTO.getUserAuthenticationDTO().getMajor());
+        }
+        // 생년월일 수정
+        if (joinRequestDTO.getUsersDTO().getBirthday() != null ) {
+            user.setBirthday(joinRequestDTO.getUsersDTO().getBirthday());
         }
 
         // 입력한 비밀번호와 현재 비밀번호가 같은지 확인하고 덮어쓰기
@@ -196,9 +194,9 @@ public class mypageService {
 
     // 국적, 구사 가능 언어, 희망 학습 언어 수정
     @Transactional
-    public void editLang(Long userId, JoinRequestDTO joinRequestDTO, String currentPassword) {
-        // 로그인한 사용자의 userId로 usersEntity에서 해당 객체 찾기
-        usersEntity user = userRepository.findByStudentId_StudentId(userId)
+    public void editLang(@AuthenticationPrincipal PrincipalDetails principalDetails, JoinRequestDTO joinRequestDTO) {
+        // 로그인한 사용자의 studentId로 usersEntity에서 해당 객체 찾기
+        usersEntity user = userRepository.findByStudentId_StudentId(principalDetails.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다"));
         List<availableLangEntity> availableLangs = availableLangRepository.findByUserId(user);
         List<desiredLangEntity> desiredLangs = desiredLangRepository.findByUserId(user);
@@ -252,10 +250,11 @@ public class mypageService {
     }
 
     //회원 탈퇴
-    public void deleteUser(Long userId) {
-        // 로그인한 사용자의 userId(학번)로 usersEntity에서 해당 객체 찾기
-        usersEntity user = userRepository.findByStudentId_StudentId(userId)
+    public void deleteUser(@AuthenticationPrincipal PrincipalDetails principalDetails) {
+        // 로그인한 사용자의 studentId로 usersEntity에서 해당 객체 찾기
+        usersEntity user = userRepository.findByStudentId_StudentId(principalDetails.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다"));
+
         userAuthenticationEntity userAuth = user.getStudentId();
         List<availableLangEntity> availableLangs = availableLangRepository.findByUserId(user);
         List<desiredLangEntity> desiredLangs = desiredLangRepository.findByUserId(user);

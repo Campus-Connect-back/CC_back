@@ -8,17 +8,17 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@IdClass(participateId.class)
 @Table(name = "participate")
 public class participateEntity {
-    // 유저(FK)
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long participateId;
+    // 유저(FK)
     @ManyToOne
     @JoinColumn(name = "userId", nullable = false)
     private usersEntity userId;
 
     // 채팅방 id
-    @Id
     @ManyToOne
     @JoinColumn(name = "roomId")
     private chatRoomEntity roomId;

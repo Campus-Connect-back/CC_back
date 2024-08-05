@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 
 public class userAuthenticationDTO {
-    private Long studentId;
+    private String studentId;
     private String studentName;
     private String major;
 }

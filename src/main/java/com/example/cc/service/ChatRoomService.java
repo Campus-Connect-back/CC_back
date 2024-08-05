@@ -37,14 +37,7 @@ public class ChatRoomService {
 
     // 1:1 랜덤 채팅 목록 반환
     public List<chatRoomEntity> getMatchRooms(@AuthenticationPrincipal PrincipalDetails principalDetails){
-        String username = principalDetails.getUsername();
-        Long studentId;
-        try {
-            studentId = Long.parseLong(username); // Username should be a valid Long value
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Invalid student ID format: " + username, e);
-        }
-        usersEntity user = userRepository.findByStudentId_StudentId(studentId)
+        usersEntity user = userRepository.findByStudentId_StudentId(principalDetails.getUsername())
              .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다"));
 
         List<participateEntity> getAllRooms = participateRepository.findByUserId(user); // 로그인한 사용자의 모든 room 찾기
@@ -59,17 +52,9 @@ public class ChatRoomService {
         }
         return matchRooms;
     }
-
     // 그룹 채팅 목록 반환
     public List<chatRoomEntity> getGroupRooms(@AuthenticationPrincipal PrincipalDetails principalDetails){
-        String username = principalDetails.getUsername();
-        Long studentId;
-        try {
-            studentId = Long.parseLong(username); // Username should be a valid Long value
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Invalid student ID format: " + username, e);
-        }
-        usersEntity user = userRepository.findByStudentId_StudentId(studentId)
+        usersEntity user = userRepository.findByStudentId_StudentId(principalDetails.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다"));
 
         List<participateEntity> getAllRooms = participateRepository.findByUserId(user); // 로그인한 사용자의 모든 room 찾기
@@ -93,9 +78,7 @@ public class ChatRoomService {
     // 채팅방 나가기
     @Transactional
     public void exitRoom(@AuthenticationPrincipal PrincipalDetails principalDetails, Long roomId){
-        String username = principalDetails.getUsername();
-        Long studentId;studentId = Long.parseLong(username);
-        usersEntity user = userRepository.findByStudentId_StudentId(studentId)
+        usersEntity user = userRepository.findByStudentId_StudentId(principalDetails.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다"));
         chatRoomEntity chatRoom = chatRoomRepository.findByRoomId(roomId);
 
@@ -107,4 +90,22 @@ public class ChatRoomService {
         }
     }
 
+    // 채팅방 참여자 목록
+    // 그룹 채팅 목록 반환
+    public List<usersEntity> getMembers(@AuthenticationPrincipal PrincipalDetails principalDetails, Long roomId){
+        // 로그인한 사용자의 학번으로 usersEntity에서 객체 찾기
+        usersEntity user = userRepository.findByStudentId_StudentId(principalDetails.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다"));
+        // roomId로 채팅방 객체 찾기
+        chatRoomEntity room = chatRoomRepository.findByRoomId(roomId);
+        // 해당 채팅방에 참여한 모든 유저 찾기
+        List<participateEntity> getAllUsers = participateRepository.findByRoomId(room);
+        List<usersEntity> allUsers = new ArrayList<>();
+        for(int i = 0; i <getAllUsers.size(); i++){
+            usersEntity getUser = userRepository.findByUserId(getAllUsers.get(i).getUserId().getUserId());
+            // roomType이 1(스터디 그룹)인 채팅방 찾아서 list에 넣기
+            allUsers.add(getUser);
+        }
+        return allUsers;
+    }
 }

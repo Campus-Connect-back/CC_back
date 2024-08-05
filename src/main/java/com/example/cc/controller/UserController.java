@@ -8,6 +8,7 @@ import com.example.cc.service.mypageService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.Response;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -24,6 +25,30 @@ import static com.mysql.cj.conf.PropertyKey.logger;
 public class UserController {
     private final UserService userService;
     private final mypageService mypageService;
+
+
+    // 파일 저장 경로, application.properties에서 설정
+    @Value("${file.upload-dir}")
+    private String uploadDir;
+    // 프로필 사진 업로드
+    @PostMapping(value= "/mypage/edit_profileImg", produces = "application/json", consumes = "multipart/form-data")
+    public ResponseEntity<?> uploadImg(@AuthenticationPrincipal PrincipalDetails principalDetails,
+                                       @RequestParam("file") MultipartFile file){
+        try{
+            mypageService.uploadImg(principalDetails, file);
+            return ResponseEntity.ok(" file = " + file);
+        } catch(Exception e){
+            return ResponseEntity.badRequest().body("이미지 파일 업로드에 실패하였습니다");
+        }
+    }
+
+    // 재학생 인증
+    @PostMapping("/auth")
+    public String  authStudent(@RequestBody studentDatabaseDTO studentDatabaseDTO) {
+        return userService.auth(studentDatabaseDTO);
+
+    }
+
     // 회원가입
     @PostMapping("/join")
     public ResponseEntity<String> createUser(@RequestBody JoinRequestDTO joinRequestDTO) {
@@ -35,10 +60,10 @@ public class UserController {
         }
     }
     // 회원 탈퇴
-    @DeleteMapping("/mypage/{user_id}/delete")
-    public ResponseEntity<String> deleteUser(@AuthenticationPrincipal PrincipalDetails principalDetails, @PathVariable Long user_id) {
+    @DeleteMapping("/mypage/delete")
+    public ResponseEntity<String> deleteUser(@AuthenticationPrincipal PrincipalDetails principalDetails) {
         try{
-            mypageService.deleteUser(user_id);
+            mypageService.deleteUser(principalDetails);
             return ResponseEntity.ok().body("회원 탈퇴 성공");
         }catch (Exception e) {
             return ResponseEntity.badRequest().body("회원 탈퇴 실패");
@@ -46,40 +71,27 @@ public class UserController {
     }
 
     // 마이페이지, 유저 정보 띄우기
-    @GetMapping("/mypage/{user_id}")
-    public mypageDTO getMypage(@AuthenticationPrincipal PrincipalDetails principalDetails, @PathVariable Long user_id) {
-
-            mypageDTO response = mypageService.getUserInfo(user_id);
-            return response;}
-
-
-    // 프로필 사진 업로드
-    @PostMapping("/mypage/{user_id}/edit_profileImg")
-    public ResponseEntity<?> uploadImg(@RequestPart(value="key", required=false) usersDTO userDto,
-                                       @RequestPart(value="file", required=false) MultipartFile file){
-        try{
-            mypageService.uploadImg(userDto.getUserId(), file);
-            return ResponseEntity.ok("dto = " + userDto + " file = " + file);
-        } catch(Exception e){
-            return ResponseEntity.badRequest().body("이미지 파일 업로드에 실패하였습니다");
-        }
+    @GetMapping("/mypage")
+    public mypageDTO getMypage(@AuthenticationPrincipal PrincipalDetails principalDetails) {
+            mypageDTO response = mypageService.getUserInfo(principalDetails);
+            return response;
     }
 
     // 유저 정보 수정(비밀번호, 닉네임, 학과)
-    @PutMapping("/mypage/{user_id}/edit_userInfo")
-    public ResponseEntity<?> editInfo( @PathVariable Long user_id, @RequestBody JoinRequestDTO joinRequestDTO, @RequestParam String currentPassword){
+    @PutMapping("/mypage/edit_userInfo")
+    public ResponseEntity<?> editInfo(@AuthenticationPrincipal PrincipalDetails principalDetails, @RequestBody JoinRequestDTO joinRequestDTO, @RequestParam String currentPassword){
         try{
-            mypageService.editInfo(user_id, joinRequestDTO, currentPassword);
+            mypageService.editInfo(principalDetails, joinRequestDTO, currentPassword);
             return ResponseEntity.ok("유저 정보 수정 완료");
         } catch(Exception e){
             return ResponseEntity.badRequest().body("유저 정보 수정에 실패하였습니다");
         }
     }
     // 유저 정보 수정(비밀번호, 닉네임, 학과)
-    @PutMapping("/mypage/{user_id}/edit_userLangInfo")
-    public ResponseEntity<?> editLang( @PathVariable Long user_id, @RequestBody JoinRequestDTO joinRequestDTO, @RequestParam String currentPassword){
+    @PutMapping("/mypage/edit_userLangInfo")
+    public ResponseEntity<?> editLang(@AuthenticationPrincipal PrincipalDetails principalDetails, @RequestBody JoinRequestDTO joinRequestDTO){
         try{
-            mypageService.editLang(user_id, joinRequestDTO, currentPassword);
+            mypageService.editLang(principalDetails, joinRequestDTO);
             return ResponseEntity.ok("유저 언어 정보 수정 완료");
         } catch(Exception e){
             return ResponseEntity.badRequest().body("유저 언어 정보 수정에 실패하였습니다");

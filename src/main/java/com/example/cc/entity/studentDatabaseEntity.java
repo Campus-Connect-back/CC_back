@@ -14,7 +14,7 @@ public class studentDatabaseEntity {
     // 학번(PK)
     @Id
     @Column
-    private Long studentId;
+    private String studentId;
 
     // 이름
     @Column(nullable = false)

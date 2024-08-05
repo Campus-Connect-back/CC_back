@@ -24,7 +24,7 @@ public class usersDTO {
     private Date birthday;
     private String nationality;
     private String imgUrl;
-    private Long studentId;
+    private String studentId;
     private List<availableLangDTO> availableLang;
     private List<desiredLangDTO> desiredLang;
 }
