@@ -14,4 +14,8 @@ public class desiredLangDTO {
     private Long desiredLangId;
     private String lang;
     private Long userId;
+    // 생성자 추가
+    public desiredLangDTO(String lang) {
+        this.lang = lang;
+    }
 }

@@ -11,11 +11,14 @@ import com.example.cc.repository.accounts.AvailableLangRepository;
 import com.example.cc.repository.accounts.DesiredLangRepository;
 import com.example.cc.repository.accounts.UserAuthRepository;
 import com.example.cc.repository.accounts.UserRepository;
+import jakarta.annotation.Resource;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -29,6 +32,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -129,7 +133,7 @@ public class mypageService {
         }
     }
     // 이미지 업로드
-    public ResponseEntity<?> uploadImg(@AuthenticationPrincipal PrincipalDetails principalDetails, MultipartFile file) {
+    public usersEntity uploadImg(@AuthenticationPrincipal PrincipalDetails principalDetails, MultipartFile file) {
         // 로그인한 사용자의 studentId로 usersEntity에서 해당 객체 찾기
         usersEntity user = userRepository.findByStudentId_StudentId(principalDetails.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다"));
@@ -148,53 +152,59 @@ public class mypageService {
             if (imgUrl != null) {
                 user.setImgUrl(imgUrl);
                 userRepository.save(user);
-                return ResponseEntity.ok().body("이미지가 저장되었습니다");
-            } else {
-                return ResponseEntity.badRequest().body("1.이미지 파일 업로드 중에 오류가 발생하였습니다");
+                return user;
             }
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("2,이미지 파일 업로드 중에 오류가 발생하였습니다");
+            ResponseEntity.badRequest().body("이미지 파일 업로드 중에 오류가 발생하였습니다");
         }
+        return user;
     }
 
     // 내 정보 수정하기(비밀번호, 닉네임, 학과, 생년월일 수정)
     @Transactional
-    public void editInfo(@AuthenticationPrincipal PrincipalDetails principalDetails, JoinRequestDTO joinRequestDTO, String currentPassword) {
+    public JoinRequestDTO editInfo(@AuthenticationPrincipal PrincipalDetails principalDetails, JoinRequestDTO joinRequestDTO, String currentPassword) {
         // 로그인한 사용자의 studentId로 usersEntity에서 해당 객체 찾기
         usersEntity user = userRepository.findByStudentId_StudentId(principalDetails.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다"));
 
         userAuthenticationEntity userAuth = user.getStudentId();
+        // 현재 비밀번호와 입력한 비밀번호가 일치해야만 정보 수정할 수 있음
+        if (passwordEncoder.matches(currentPassword, user.getPassword())) {
 
-        // 닉네임 수정, null이면 기존 정보 유지
-        if (joinRequestDTO.getUsersDTO().getNickName() != null  && !joinRequestDTO.getUsersDTO().getNickName().isEmpty()) {
-            user.setNickName(joinRequestDTO.getUsersDTO().getNickName());
-        }
+            // 닉네임 수정, null이면 기존 정보 유지
+            if (joinRequestDTO.getUsersDTO().getNickName() != null && !joinRequestDTO.getUsersDTO().getNickName().isEmpty()) {
+                user.setNickName(joinRequestDTO.getUsersDTO().getNickName());
+            }
 
-        // 학과 수정
-        if (joinRequestDTO.getUserAuthenticationDTO().getMajor() != null  && !joinRequestDTO.getUserAuthenticationDTO().getMajor().isEmpty()) {
-            userAuth.setMajor(joinRequestDTO.getUserAuthenticationDTO().getMajor());
-        }
-        // 생년월일 수정
-        if (joinRequestDTO.getUsersDTO().getBirthday() != null ) {
-            user.setBirthday(joinRequestDTO.getUsersDTO().getBirthday());
-        }
+            // 학과 수정
+            if (joinRequestDTO.getUserAuthenticationDTO().getMajor() != null && !joinRequestDTO.getUserAuthenticationDTO().getMajor().isEmpty()) {
+                userAuth.setMajor(joinRequestDTO.getUserAuthenticationDTO().getMajor());
+            }
+            // 생년월일 수정
+            if (joinRequestDTO.getUsersDTO().getBirthday() != null) {
+                user.setBirthday(joinRequestDTO.getUsersDTO().getBirthday());
+            }
 
-        // 입력한 비밀번호와 현재 비밀번호가 같은지 확인하고 덮어쓰기
-        if (joinRequestDTO.getUsersDTO().getPassword() != null && !joinRequestDTO.getUsersDTO().getPassword().isEmpty()) {
-            if (passwordEncoder.matches(currentPassword, user.getPassword())) {
+            // 입력한 비밀번호와 현재 비밀번호가 같은지 확인하고 덮어쓰기
+            if (joinRequestDTO.getUsersDTO().getPassword() != null && !joinRequestDTO.getUsersDTO().getPassword().isEmpty()) {
+
                 user.setPassword(passwordEncoder.encode(joinRequestDTO.getUsersDTO().getPassword()));
+
             }
         }
-
         // 덮어쓴 내용 저장
         userRepository.save(user);
         userAuthRepository.save(userAuth);
+        // joinRequestDTO 업데이트
+        joinRequestDTO.getUsersDTO().setNickName(user.getNickName());
+        joinRequestDTO.getUserAuthenticationDTO().setMajor(userAuth.getMajor());
+        joinRequestDTO.getUsersDTO().setBirthday(user.getBirthday());
+        return joinRequestDTO;
     }
 
     // 국적, 구사 가능 언어, 희망 학습 언어 수정
     @Transactional
-    public void editLang(@AuthenticationPrincipal PrincipalDetails principalDetails, JoinRequestDTO joinRequestDTO) {
+    public JoinRequestDTO editLang(@AuthenticationPrincipal PrincipalDetails principalDetails, JoinRequestDTO joinRequestDTO) {
         // 로그인한 사용자의 studentId로 usersEntity에서 해당 객체 찾기
         usersEntity user = userRepository.findByStudentId_StudentId(principalDetails.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다"));
@@ -202,7 +212,7 @@ public class mypageService {
         List<desiredLangEntity> desiredLangs = desiredLangRepository.findByUserId(user);
 
         // 국적 수정, null이면 기존 정보 유지
-        if (joinRequestDTO.getUsersDTO().getNationality() != null  && !joinRequestDTO.getUsersDTO().getNationality().isEmpty()) {
+        if (joinRequestDTO.getUsersDTO().getNationality() != null && !joinRequestDTO.getUsersDTO().getNationality().isEmpty()) {
             user.setNationality(joinRequestDTO.getUsersDTO().getNationality());
         }
         // 덮어쓴 내용 저장
@@ -247,6 +257,16 @@ public class mypageService {
                 }
             }
         }
+        // joinRequestDTO 업데이트
+        joinRequestDTO.getUsersDTO().setNationality(user.getNationality());
+        joinRequestDTO.getUsersDTO().setAvailableLang(availableLangRepository.findByUserId(user).stream()
+                .map(lang -> new availableLangDTO(lang.getLang()))
+                .collect(Collectors.toList()));
+        joinRequestDTO.getUsersDTO().setDesiredLang(desiredLangRepository.findByUserId(user).stream()
+                .map(lang -> new desiredLangDTO(lang.getLang()))
+                .collect(Collectors.toList()));
+
+        return joinRequestDTO;
     }
 
     //회원 탈퇴
