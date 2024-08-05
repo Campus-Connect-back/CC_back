@@ -1,14 +1,18 @@
 package com.example.cc.service;
 
+import com.example.cc.config.PrincipalDetails;
 import com.example.cc.entity.*;
 import com.example.cc.repository.ChatRoomRepository;
 import com.example.cc.repository.ParticipateRepository;
 import com.example.cc.repository.UsersRepository;
+import com.example.cc.repository.accounts.UserRepository;
 import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.SetOperations;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StopWatch;
 
@@ -20,7 +24,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class MatchService {
     private final RedisTemplate<String,String> redisTemplate;
-    private final UsersRepository usersRepository;
+    private final UserRepository userRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final ParticipateRepository participateRepository;
     private  SetOperations<String, String> setOps;
@@ -32,8 +36,11 @@ public class MatchService {
 
     @Transactional
     // 매칭 버튼 누르면
-    public void startMatch(usersEntity user){
+    public void startMatch(@AuthenticationPrincipal PrincipalDetails principalDetails){
         //  로그인한 사용자의 userId 반환하기
+        usersEntity user = userRepository.findByStudentId_StudentId(principalDetails.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다"));
+
         String userId = user.getUserId().toString();
         // 사용자의 구사 가능 언어 set으로 저장하기
         for (availableLangEntity lang : user.getAvailableLang()){
@@ -103,7 +110,7 @@ public class MatchService {
 
     // 유저 정보 가져오기
     private usersEntity getUserFromRedis(Long userId){
-        return usersRepository.findById(userId).orElse(null);
+        return userRepository.findById(userId).orElse(null);
     }
 
     // 채팅방 생성
