@@ -40,8 +40,6 @@ public class SecurityConfig {
                                 new AntPathRequestMatcher("/user/login"),
                                 new AntPathRequestMatcher("/user/auth"),
                                 new AntPathRequestMatcher("/user/join"),
-                                new AntPathRequestMatcher("/chat/roomList/match"), // 임의로 해놓은 것
-                                new AntPathRequestMatcher("/chat/roomList/group"),
                                 new AntPathRequestMatcher("/stomp/chat/**"), // WebSocket 엔드포인트 허용
                                 new AntPathRequestMatcher("/stomp/match/**")  // WebSocket 엔드포인트 허용
                         ).permitAll() // 해당 요청에 대해 접근 허용
@@ -79,7 +77,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(Arrays.asList("http://10.50.104.89:3000"));// 프론트 디바이스 ip주소
+        config.setAllowedOrigins(Arrays.asList("http://172.30.1.42:3000"));// 프론트 디바이스 ip주소
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowCredentials(true);
         config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
