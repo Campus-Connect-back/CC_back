@@ -1,6 +1,7 @@
 package com.example.cc.controller;
 
 import com.example.cc.config.PrincipalDetails;
+import com.example.cc.dto.chating.ChatRoomWithMessageDTO;
 import com.example.cc.entity.chatRoomEntity;
 import com.example.cc.entity.messageEntity;
 import com.example.cc.entity.usersEntity;
@@ -25,13 +26,13 @@ public class ChatRoomController {
 
     // 로그인한 사용자의 1대1 채팅방 목록 반환
     @GetMapping("/roomList/match")
-    public List<chatRoomEntity> getMatchRooms(@AuthenticationPrincipal PrincipalDetails principal) {
+    public List<ChatRoomWithMessageDTO> getMatchRooms(@AuthenticationPrincipal PrincipalDetails principal) {
         return chatRoomService.getMatchRooms(principal);
     }
 
     // 로그인한 사용자의 그룹 채팅방 목록 반환
     @GetMapping("/roomList/group")
-    public List<chatRoomEntity> getGroupRooms(@AuthenticationPrincipal PrincipalDetails principal) {
+    public List<ChatRoomWithMessageDTO> getGroupRooms(@AuthenticationPrincipal PrincipalDetails principal) {
         return chatRoomService.getGroupRooms(principal);
     }
 
