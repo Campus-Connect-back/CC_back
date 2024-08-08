@@ -1,6 +1,8 @@
 package com.example.cc.service;
 
 import com.example.cc.config.PrincipalDetails;
+import com.example.cc.dto.chating.chatRoomDTO;
+import com.example.cc.dto.chating.messageDTO;
 import com.example.cc.entity.*;
 import com.example.cc.repository.ChatRoomRepository;
 import com.example.cc.repository.ParticipateRepository;
@@ -36,7 +38,7 @@ public class MatchService {
 
     @Transactional
     // 매칭 버튼 누르면
-    public void startMatch(@AuthenticationPrincipal PrincipalDetails principalDetails){
+    public chatRoomDTO startMatch(@AuthenticationPrincipal PrincipalDetails principalDetails){
         //  로그인한 사용자의 userId 반환하기
         usersEntity user = userRepository.findByStudentId_StudentId(principalDetails.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다"));
@@ -51,14 +53,14 @@ public class MatchService {
             setOps.add("desiredLang:" + lang.getLang(), userId);
         }
         // 유저 매칭하기
-        matchUser(user);
+        return matchUser(user);
     }
 
     // 유저 매칭하기
-    private void matchUser(usersEntity user){
-
+    private chatRoomDTO matchUser(usersEntity user){
             //  로그인한 사용자의 userId 반환하기
             String userId = String.valueOf(user.getUserId());
+
             // redis 대기열 돌면서 매칭되는 사람이 있는지 검사
             for (desiredLangEntity desiredLang : user.getDesiredLang()) {
                 Set<String> matchedUserIds = setOps.members("availableLang:" + desiredLang.getLang());
@@ -73,15 +75,15 @@ public class MatchService {
                         // 매칭 성사
                         System.out.println("Matching successful between: " + user.getNickName() + " and " + matchedUser.getNickName());
                         // 채팅방 만들기
-                        createChatRoom(matchedUser, user);
+                        chatRoomDTO createdRoom = createChatRoom(matchedUser, user);
                         // 대기열에서 매칭된 사용자 정보 지우기
                         removeUserFromQueue(matchedUser);
                         removeUserFromQueue(user);
-                        return;
+                        return createdRoom;
                     }
                 }
             }
-
+        return null;
 
     }
 
@@ -114,7 +116,7 @@ public class MatchService {
     }
 
     // 채팅방 생성
-    private void createChatRoom(usersEntity user1, usersEntity user2){
+    private chatRoomDTO createChatRoom(usersEntity user1, usersEntity user2){
         //채팅방 만들기
         chatRoomEntity chatRoom =  chatRoomRepository.save(chatRoomEntity.builder()
                 .createDate(new Date())
@@ -122,17 +124,25 @@ public class MatchService {
                 .peopleNum(2L)
                 .roomType(0L)
                 .build());
-        chatRoomEntity room = chatRoom;
+
         // participateEntity에 추가하기
         participateEntity participate1 =  participateRepository.save(participateEntity.builder()
-                .roomId(room)
+                .roomId(chatRoom)
                 .userId(user1)
                 .build());
 
         participateEntity participate2 =  participateRepository.save(participateEntity.builder()
-                .roomId(room)
+                .roomId(chatRoom)
                 .userId(user2)
                 .build());
+        return convertDTO(chatRoom);
+    }
+    public chatRoomDTO convertDTO(chatRoomEntity chatRoom) {
+        chatRoomDTO chatRoomDTO = new chatRoomDTO();
+        chatRoomDTO.setRoomId(chatRoom.getRoomId());
+        chatRoomDTO.setRoomName(chatRoom.getRoomName());
+        chatRoomDTO.setRoomType(chatRoom.getRoomType());
+        return chatRoomDTO;
     }
 
     // 매칭 성사되면 대기큐에서 삭제하기

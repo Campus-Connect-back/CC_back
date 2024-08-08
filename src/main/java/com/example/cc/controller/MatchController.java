@@ -1,6 +1,8 @@
 package com.example.cc.controller;
 
 import com.example.cc.config.PrincipalDetails;
+import com.example.cc.dto.chating.chatRoomDTO;
+import com.example.cc.entity.chatRoomEntity;
 import com.example.cc.entity.usersEntity;
 import com.example.cc.service.MatchService;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +19,7 @@ public class MatchController {
     private final MatchService matchService;
 
     @PostMapping("/enqueue")
-    public void startMatch(@AuthenticationPrincipal PrincipalDetails principalDetails){
-        matchService.startMatch(principalDetails);
+    public chatRoomDTO startMatch(@AuthenticationPrincipal PrincipalDetails principalDetails){
+        return matchService.startMatch(principalDetails);
     }
 }
