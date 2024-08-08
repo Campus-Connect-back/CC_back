@@ -41,7 +41,7 @@ public class ChatRoomService {
     // 1:1 랜덤 채팅 목록 반환
     public List<ChatRoomWithMessageDTO> getMatchRooms(@AuthenticationPrincipal PrincipalDetails principalDetails){
         usersEntity user = userRepository.findByStudentId_StudentId(principalDetails.getUsername())
-             .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다"));
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다"));
 
         List<participateEntity> getAllRooms = participateRepository.findByUserId(user); // 로그인한 사용자의 모든 room 찾기
 
