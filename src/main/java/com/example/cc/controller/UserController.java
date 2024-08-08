@@ -5,25 +5,16 @@ import com.example.cc.dto.accounts.*;
 import com.example.cc.entity.*;
 import com.example.cc.service.UserService;
 import com.example.cc.service.mypageService;
-import jakarta.annotation.Resource;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.UrlResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.net.MalformedURLException;
-
-import static com.mysql.cj.conf.PropertyKey.logger;
 
 @RestController
 @RequiredArgsConstructor

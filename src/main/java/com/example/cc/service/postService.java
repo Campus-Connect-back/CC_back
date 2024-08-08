@@ -1,19 +1,21 @@
 package com.example.cc.service;
 
+import com.example.cc.config.PrincipalDetails;
 import com.example.cc.dto.post.postDTO;
 import com.example.cc.dto.post.updateDTO;
 import com.example.cc.entity.*;
-import com.example.cc.repository.ChatRoomRepository;
-import com.example.cc.repository.PostRepository;
-import com.example.cc.repository.UsersRepository;
-import com.example.cc.repository.WeeklyRepository;
+import com.example.cc.repository.*;
+import com.example.cc.repository.accounts.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -23,13 +25,13 @@ public class postService {
     private final PostRepository postRepository;
     private final WeeklyRepository weeklyRepository;
     private final ChatRoomRepository chatRoomRepository;
-    private final UsersRepository usersRepository;
+    private final UserRepository userRepository;
 
 //    하나의 트렌젝션 => 롤백
     @Transactional
-    public void insertPost(postDTO postDTO){
-
-        usersEntity user = usersEntity.builder().userId(postDTO.getPostId()).build();
+    public void insertPost(postDTO postDTO,@AuthenticationPrincipal PrincipalDetails principalDetails){
+        usersEntity user = userRepository.findByStudentId_StudentId(principalDetails.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다"));
 
 //        채팅룸 save
         chatRoomEntity chatRoom =  chatRoomRepository.save(chatRoomEntity.builder()
@@ -41,7 +43,6 @@ public class postService {
 //      post save
      postEntity post = postRepository.save(postEntity.builder()
                 .DayOfWeek(postDTO.getDayOfWeek())
-                .TimeInfo(postDTO.getTimeInfo())
                 .faceToFace(postDTO.getFaceToFace())
                 .language(postDTO.getLanguage())
                 .postContent(postDTO.getPostContent())
@@ -67,16 +68,28 @@ public class postService {
      List<weeklyEntity> postedWeekly = weeklyRepository.findByPostId(post);
 
 //     post 에딸린 weekly 삭제
-     for(int i=0; i<postedWeekly.size(); i++) {
-         weeklyRepository.delete(postedWeekly.get(i));
-     }
+      weeklyRepository.deleteAll(postedWeekly);
       postRepository.delete(post);
 
   }
 
 //  게시글 상세보기/ 채팅방 상세보기
-  public postEntity selectById(Long postId){
-       return postRepository.findByPostId(postId);
+  public postDTO selectById(Long postId){
+        postEntity postEntity = postRepository.findByPostId(postId);
+        List<weeklyEntity> weekly = weeklyRepository.findByPostId(postEntity);
+       postDTO post = postDTO.builder().postContent(postEntity.getPostContent())
+               .postId(postId)
+               .dayOfWeek(postEntity.getDayOfWeek())
+               .timeInfo(postEntity.getTimeInfo())
+               .faceToFace(postEntity.getFaceToFace())
+               .language(postEntity.getLanguage())
+               .postContent(postEntity.getPostContent())
+               .postTitle(postEntity.getPostTitle())
+               .chatRoomId(postEntity.getChatRoomId())
+               .userId(postEntity.getPostId())
+               .weeklyInfos(weekly)
+               .build();
+        return post;
   }
 
 //  작성한 게시글 목록 언어별로 띄워줌
