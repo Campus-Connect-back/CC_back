@@ -20,6 +20,7 @@ import org.springframework.util.StopWatch;
 
 import java.util.Date;
 import java.util.Set;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,6 +31,7 @@ public class MatchService {
     private final ChatRoomRepository chatRoomRepository;
     private final ParticipateRepository participateRepository;
     private  SetOperations<String, String> setOps;
+    private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     @PostConstruct
     private void init() {
@@ -53,7 +55,19 @@ public class MatchService {
             setOps.add("desiredLang:" + lang.getLang(), userId);
         }
         // 유저 매칭하기
-        return matchUser(user);
+        CompletableFuture<chatRoomDTO> future = CompletableFuture.supplyAsync(() -> matchUser(user), executorService);
+
+        try {
+            // 20초 동안 매칭 시도
+            return future.get(20, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            // 매칭 실패 시 처리
+            future.cancel(true); // 매칭이 20초 동안 이루어지지 않으면 작업 취소
+            System.out.println("매칭 실패: 시간이 초과되었습니다.");
+            return null; // 또는 매칭 실패를 나타내는 다른 처리
+        } catch (Exception e) {
+            throw new RuntimeException("매칭 중 오류가 발생했습니다.", e);
+        }
     }
 
     // 유저 매칭하기
