@@ -44,12 +44,12 @@ public class usersEntity {
     private userAuthenticationEntity studentId;
 
     //구사 언어
-    @OneToMany(mappedBy = "userId")
+    @OneToMany(mappedBy = "userId", fetch = FetchType.EAGER)
     @JsonIgnore
     private List<availableLangEntity> availableLang;
 
     //희망 학습 언어
-    @OneToMany(mappedBy = "userId")
+    @OneToMany(mappedBy = "userId", fetch = FetchType.EAGER)
     @JsonIgnore
     private List<desiredLangEntity> desiredLang;
 
