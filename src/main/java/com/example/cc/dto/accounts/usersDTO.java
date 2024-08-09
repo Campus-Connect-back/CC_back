@@ -27,4 +27,5 @@ public class usersDTO {
     private String studentId;
     private List<availableLangDTO> availableLang;
     private List<desiredLangDTO> desiredLang;
+    private List<String> languages;
 }
