@@ -77,7 +77,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(Arrays.asList("http://172.30.1.42:3000"));// 프론트 디바이스 ip주소
+        config.setAllowedOrigins(Arrays.asList("http://192.168.0.3:3000"));// 프론트 디바이스 ip주소
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowCredentials(true);
         config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));

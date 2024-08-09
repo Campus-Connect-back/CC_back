@@ -29,9 +29,9 @@ public class UserController {
     private String uploadDir;
     // 프로필 사진 업로드
     @PostMapping(value= "/mypage/edit_profileImg", produces = "application/json", consumes = "multipart/form-data")
-    public usersEntity uploadImg(@AuthenticationPrincipal PrincipalDetails principalDetails,
+    public void uploadImg(@AuthenticationPrincipal PrincipalDetails principalDetails,
                                        @RequestParam("file") MultipartFile file) {
-        return mypageService.uploadImg(principalDetails, file);
+        mypageService.uploadImg(principalDetails, file);
 
     }
     @GetMapping("/images/{imgUrl}")
@@ -72,8 +72,8 @@ public class UserController {
 
     // 마이페이지, 유저 정보 띄우기
     @GetMapping("/mypage")
-    public mypageDTO getMypage(@AuthenticationPrincipal PrincipalDetails principalDetails) {
-            mypageDTO response = mypageService.getUserInfo(principalDetails);
+    public JoinRequestDTO getMypage(@AuthenticationPrincipal PrincipalDetails principalDetails) {
+        JoinRequestDTO response = mypageService.getUserInfo(principalDetails);
             return response;
     }
 

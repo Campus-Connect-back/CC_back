@@ -16,6 +16,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.coyote.Response;
+import org.hibernate.mapping.Join;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.UrlResource;
@@ -59,16 +60,23 @@ public class mypageService {
     private static final long MAX_IMAGE_SIZE = 5242880;
 
     // 유저 정보 띄우기(닉네임, 생년월일, 학과, 학번, 국적, 구사 가능 언어, 희망 학습 언어)
-    public mypageDTO getUserInfo(@AuthenticationPrincipal PrincipalDetails principalDetails) {
+    public JoinRequestDTO getUserInfo(@AuthenticationPrincipal PrincipalDetails principalDetails) {
         // 로그인한 사용자의 studentId로 usersEntity에서 해당 객체 찾기
         usersEntity user = userRepository.findByStudentId_StudentId(principalDetails.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다"));
 
+        userAuthenticationEntity userAuth = userAuthRepository.findByStudentId(principalDetails.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다"));
         // 찾은 user 객체로 availableLang, desiredLang 찾기
         List<availableLangEntity> availableLangs = availableLangRepository.findByUserId(user);
         List<desiredLangEntity> desiredLangs = desiredLangRepository.findByUserId(user);
 
-        mypageDTO mypage = mypageDTO.builder()
+        JoinRequestDTO mypage = JoinRequestDTO.builder()
+                .userAuthenticationDTO(userAuthenticationDTO.builder()
+                        .studentId(userAuth.getStudentId())
+                        .major(userAuth.getMajor())
+                        .studentName(userAuth.getStudentName())
+                        .build())
                 .usersDTO(usersDTO.builder()
                         .userId(user.getUserId())
                         .nickName(user.getNickName())
@@ -133,7 +141,7 @@ public class mypageService {
         }
     }
     // 이미지 업로드
-    public usersEntity uploadImg(@AuthenticationPrincipal PrincipalDetails principalDetails, MultipartFile file) {
+    public void uploadImg(@AuthenticationPrincipal PrincipalDetails principalDetails, MultipartFile file) {
         // 로그인한 사용자의 studentId로 usersEntity에서 해당 객체 찾기
         usersEntity user = userRepository.findByStudentId_StudentId(principalDetails.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다"));
@@ -152,12 +160,11 @@ public class mypageService {
             if (imgUrl != null) {
                 user.setImgUrl(imgUrl);
                 userRepository.save(user);
-                return user;
             }
         } catch (Exception e) {
             ResponseEntity.badRequest().body("이미지 파일 업로드 중에 오류가 발생하였습니다");
         }
-        return user;
+
     }
 
     // 내 정보 수정하기(비밀번호, 닉네임, 학과, 생년월일 수정)
