@@ -36,8 +36,8 @@ public class postController {
 
 //  작성글 세부정보/채팅방 정보도 여기서 받아서 띄움
     @GetMapping("/MyPost/{postId}")
-    public postDTO selectPost(@PathVariable("postId") Long postId){
-       return postService.selectById(postId);
+    public postDTO selectPost(@PathVariable("postId") Long postId, @AuthenticationPrincipal PrincipalDetails principalDetails){
+       return postService.selectById(postId,principalDetails);
     }
 
 // 작성글 List 띄우기

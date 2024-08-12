@@ -74,10 +74,13 @@ public class postService {
   }
 
 //  게시글 상세보기/ 채팅방 상세보기
-  public postDTO selectById(Long postId){
+  public postDTO selectById(Long postId , @AuthenticationPrincipal PrincipalDetails principalDetails){
         postEntity postEntity = postRepository.findByPostId(postId);
         List<weeklyEntity> weekly = weeklyRepository.findByPostId(postEntity);
-       postDTO post = postDTO.builder().postContent(postEntity.getPostContent())
+        usersEntity user = userRepository.findByStudentId_StudentId(principalDetails.getUsername())
+              .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다"));
+
+      postDTO post = postDTO.builder().postContent(postEntity.getPostContent())
                .postId(postId)
                .dayOfWeek(postEntity.getDayOfWeek())
                .timeInfo(postEntity.getTimeInfo())
@@ -86,7 +89,7 @@ public class postService {
                .postContent(postEntity.getPostContent())
                .postTitle(postEntity.getPostTitle())
                .chatRoomId(postEntity.getChatRoomId())
-               .userId(postEntity.getPostId())
+               .userId(user.getUserId())
                .weeklyInfos(weekly)
                .build();
         return post;
