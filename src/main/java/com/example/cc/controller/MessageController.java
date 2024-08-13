@@ -30,11 +30,10 @@ public class MessageController {
     * /pub 으로 발행자가 메시지를 보내면 브로커가 /sub 경로로 구독자에게 메시지를 보냄
     */
 
-
     // 채팅방에 입장했을 때
     @MessageMapping(value = "/chat/enter")
-    public void enterUser(messageDTO chat,@AuthenticationPrincipal PrincipalDetails principal) {
-        usersEntity user = userRepository.findByStudentId_StudentId(principal.getUsername())
+    public void enterUser(messageDTO chat) {
+        usersEntity user = userRepository.findByStudentId_StudentId(chat.getStudentId())
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다"));
         chat.setMessageContent(user.getNickName() + "님이 채팅방에 참여하였습니다.");
         // "/sub/chat/room/" + chat.getRoomId() 해당 경로로 메시지를 전송함
@@ -43,19 +42,19 @@ public class MessageController {
 
     // 채팅방에서 퇴장했을 때
     @MessageMapping(value = "/chat/exit")
-    public void exitUser(messageDTO chat,@AuthenticationPrincipal PrincipalDetails principal) {
-        usersEntity user = userRepository.findByStudentId_StudentId(principal.getUsername())
+    public void exitUser(messageDTO chat) {
+        usersEntity user = userRepository.findByStudentId_StudentId(chat.getStudentId())
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다"));
-
         chat.setMessageContent(user.getNickName() + "님이 퇴장하였습니다.");
         template.convertAndSend("/sub/chat/room/" + chat.getRoomId(), chat);
     }
 
     // 기본 채팅
     @MessageMapping(value = "/chat/message")
-    public void sendMessage(messageDTO message, @AuthenticationPrincipal PrincipalDetails principal) {
-        messageDTO savedMessage = messageService.saveMessage(message, principal); // 메시지 db에 저장
+    public void sendMessage(messageDTO message) {
+        messageDTO savedMessage = messageService.saveMessage(message); // 메시지 db에 저장
         template.convertAndSend("/sub/chat/room/"+savedMessage.getRoomId(), savedMessage);
     }
+
 
 }

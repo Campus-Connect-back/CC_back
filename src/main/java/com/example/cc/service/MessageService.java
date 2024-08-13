@@ -25,11 +25,9 @@ public class MessageService {
     private final ChatRoomRepository chatRoomRepository;
 
     // 메시지 저장
-    public messageDTO saveMessage(messageDTO messageDTO,@AuthenticationPrincipal PrincipalDetails principal) {
-        // 로그인한 사용자의 studentId로 usersEntity에서 해당 객체 찾기
-        usersEntity user = userRepository.findByStudentId_StudentId(principal.getUsername())
+    public messageDTO saveMessage(messageDTO messageDTO) {
+        usersEntity user = userRepository.findByStudentId_StudentId(messageDTO.getStudentId())
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다"));
-
         chatRoomEntity room = chatRoomRepository.findById(messageDTO.getRoomId()).get();
         messageEntity message = messageRepository.save(messageEntity.builder()
                 .messageContent(messageDTO.getMessageContent())
@@ -46,7 +44,7 @@ public class MessageService {
         messageDTO.setMessageId(message.getMessageId());
         messageDTO.setMessageContent(message.getMessageContent());
         messageDTO.setSendTime(message.getSendTime());
-        messageDTO.setUserId(message.getUserId().getUserId());
+        messageDTO.setStudentId(message.getUserId().getStudentId().getStudentId());
         messageDTO.setRoomId(message.getRoomId().getRoomId());
         return messageDTO;
     }
