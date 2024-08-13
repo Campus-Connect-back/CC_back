@@ -23,7 +23,7 @@ public class messageDTO {
     private Long messageId;
     private String messageContent;
     private Date sendTime;
-    private Long userId;
+    private String studentId;
     private Long roomId;
     private MessageType messageType;
 }

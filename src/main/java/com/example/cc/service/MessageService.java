@@ -1,5 +1,6 @@
 package com.example.cc.service;
 
+import com.example.cc.config.PrincipalDetails;
 import com.example.cc.dto.chating.messageDTO;
 import com.example.cc.entity.chatRoomEntity;
 import com.example.cc.entity.messageEntity;
@@ -7,9 +8,11 @@ import com.example.cc.entity.usersEntity;
 import com.example.cc.repository.ChatRoomRepository;
 import com.example.cc.repository.MessageRepository;
 import com.example.cc.repository.UsersRepository;
+import com.example.cc.repository.accounts.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -18,12 +21,13 @@ import java.util.Date;
 @RequiredArgsConstructor
 public class MessageService {
     private final MessageRepository messageRepository;
-    private final UsersRepository usersRepository;
+    private final UserRepository userRepository;
     private final ChatRoomRepository chatRoomRepository;
 
     // 메시지 저장
     public messageDTO saveMessage(messageDTO messageDTO) {
-        usersEntity user = usersRepository.findById(messageDTO.getUserId()).get();
+        usersEntity user = userRepository.findByStudentId_StudentId(messageDTO.getStudentId())
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다"));
         chatRoomEntity room = chatRoomRepository.findById(messageDTO.getRoomId()).get();
         messageEntity message = messageRepository.save(messageEntity.builder()
                 .messageContent(messageDTO.getMessageContent())
@@ -40,7 +44,7 @@ public class MessageService {
         messageDTO.setMessageId(message.getMessageId());
         messageDTO.setMessageContent(message.getMessageContent());
         messageDTO.setSendTime(message.getSendTime());
-        messageDTO.setUserId(message.getUserId().getUserId());
+        messageDTO.setStudentId(message.getUserId().getStudentId().getStudentId());
         messageDTO.setRoomId(message.getRoomId().getRoomId());
         return messageDTO;
     }

@@ -1,5 +1,6 @@
 package com.example.cc.controller;
 
+import com.example.cc.config.PrincipalDetails;
 import com.example.cc.dto.chating.messageDTO;
 import com.example.cc.entity.messageEntity;
 import com.example.cc.entity.usersEntity;
@@ -9,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,12 +30,11 @@ public class MessageController {
     * /pub 으로 발행자가 메시지를 보내면 브로커가 /sub 경로로 구독자에게 메시지를 보냄
     */
 
-
     // 채팅방에 입장했을 때
     @MessageMapping(value = "/chat/enter")
     public void enterUser(messageDTO chat) {
-        Long userId = chat.getUserId();
-        usersEntity user = userRepository.findById(userId).get();
+        usersEntity user = userRepository.findByStudentId_StudentId(chat.getStudentId())
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다"));
         chat.setMessageContent(user.getNickName() + "님이 채팅방에 참여하였습니다.");
         // "/sub/chat/room/" + chat.getRoomId() 해당 경로로 메시지를 전송함
         template.convertAndSend("/sub/chat/room/" + chat.getRoomId(), chat);
@@ -41,8 +43,8 @@ public class MessageController {
     // 채팅방에서 퇴장했을 때
     @MessageMapping(value = "/chat/exit")
     public void exitUser(messageDTO chat) {
-        Long userId = chat.getUserId();
-        usersEntity user = userRepository.findById(userId).get();
+        usersEntity user = userRepository.findByStudentId_StudentId(chat.getStudentId())
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다"));
         chat.setMessageContent(user.getNickName() + "님이 퇴장하였습니다.");
         template.convertAndSend("/sub/chat/room/" + chat.getRoomId(), chat);
     }
@@ -53,5 +55,6 @@ public class MessageController {
         messageDTO savedMessage = messageService.saveMessage(message); // 메시지 db에 저장
         template.convertAndSend("/sub/chat/room/"+savedMessage.getRoomId(), savedMessage);
     }
+
 
 }

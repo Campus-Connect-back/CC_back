@@ -84,7 +84,7 @@ public class UserController {
             return mypageService.editInfo(principalDetails, joinRequestDTO, password);
 
     }
-    // 유저 정보 수정(비밀번호, 닉네임, 학과)
+    // 유저 언어 정보 수정
     @PutMapping("/mypage/edit_userLangInfo")
     public JoinRequestDTO editLang(@AuthenticationPrincipal PrincipalDetails principalDetails, @RequestBody JoinRequestDTO joinRequestDTO) {
 

@@ -20,13 +20,8 @@ public class MatchController {
     private final MatchService matchService;
    // 매칭 시작
     @PostMapping("/enqueue")
-    public ResponseEntity<chatRoomDTO> startMatch(@AuthenticationPrincipal PrincipalDetails principalDetails){
-        chatRoomDTO chatRoom = matchService.startMatch(principalDetails);
-
-        if (chatRoom == null) {
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
-        }
-        return ResponseEntity.ok(chatRoom);
+    public chatRoomDTO startMatch(@AuthenticationPrincipal PrincipalDetails principalDetails){
+        return matchService.startMatch(principalDetails);
     }
     // 매칭 취소
     @PostMapping("/cancel")
@@ -36,9 +31,8 @@ public class MatchController {
     }
     // 매칭 결과
     @GetMapping("/result")
-    public ResponseEntity<MatchingDTO> matchingResult(@RequestParam Long roomId){
-        MatchingDTO result = matchService.matchingResult(roomId);
-        return ResponseEntity.ok(result);
+    public MatchingDTO matchingResult(@RequestParam Long roomId){
+        return matchService.matchingResult(roomId);
     }
 
 }
